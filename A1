@@ -1,0 +1,31 @@
+#include <cuda_runtime.h>
+#include "kernels.h"
+
+__global__ void 
+transpose_parallel_per_row(float *in, float *out, int rows_in, int cols_in)
+{
+  int rows = threadIdx.x+blockIdx.x*blockDim.x;
+  if(rows>=rows_in)
+    return;
+  for(int columns=0; columns < cols_in; columns++) 
+  {
+    int out_matrix = columns*rows_in+rows;
+    int in_matrix = rows*cols_in + columns;
+    out[out_matrix] = in[in_matrix];
+  }
+}
+
+__global__ void 
+transpose_parallel_per_element(float *in, float *out, int rows_in, int cols_in, int K1, int K2)
+{
+  int index_x=blockIdx.x*K1;
+  index_x+=threadIdx.x;
+  int index_y=blockIdx.y*K2;
+  index_y+=threadIdx.y;
+  if(index_x>=rows_in||index_y>=cols_in)
+    return;
+  int out_matrix=index_y*rows_in+index_x;
+  int in_matrix=index_x*cols_in+index_y;
+  out[out_matrix] = in[in_matrix];
+}
+

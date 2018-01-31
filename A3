@@ -1,0 +1,38 @@
+__device__ volatile int counter1 = 0;
+__global__ void histogram(int *d_input, int* d_bin, int M, int N, int BIN_COUNT)
+{
+        int value = d_input[threadIdx.x + blockIdx.x * blockDim.x];
+        if(value<M*N)
+        {
+            int* post = d_bin+value%BIN_COUNT;
+            atomicAdd(post,1);
+        }
+}
+
+__global__ void stencil(int* d_input, int M, int N)
+{
+    float sum;
+    int value = threadIdx.y + threadIdx.x*blockDim.y + (blockIdx.y + blockIdx.x*gridDim.y)*(blockDim.x*blockDim.y);
+    if((value>=0&&value<N)||(value>=(M-1)*N&&value<M*N)||(value%N==0)||(value%N==N-1)||value>=M*N)
+    {
+        atomicAdd((int*)(&counter1),1);
+    }   
+    else
+    {
+        sum = d_input[value]+d_input[value-1]+d_input[value+1]+d_input[value-N]+d_input[value+N];
+        sum = sum*0.2;
+        atomicAdd((int*)(&counter1),1);
+    }
+    while(counter1<blockDim.x*blockDim.y*gridDim.y*gridDim.x);
+    if(!((value>=0&&value<N)||(value>=(M-1)*N&&value<M*N)||(value%N==0)||(value%N==N-1)))
+        d_input[value] = sum;
+}
+
+__global__ void updateBC(int* d_input, int M, int N)
+{
+    int value = threadIdx.y + threadIdx.x*blockDim.y + (blockIdx.y + blockIdx.x*gridDim.y)*(blockDim.x*blockDim.y);
+    if((value>=0&&value<N)||(value>=(M-1)*N&&value<M*N)||(value%N==0)||(value%N==N-1))
+    {
+        d_input[value] = 1;
+    }
+}

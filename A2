@@ -1,0 +1,97 @@
+
+/* The kernel "msort" should sort the input array using parallel merge-sort. */
+
+__device__ int volatile val = 1;
+__device__ volatile int* arr1;
+__device__ volatile int* arr2;
+__device__ volatile int counter1 = 0;
+__device__ volatile int counter4 = 0;
+__device__ volatile int counter3 = 0;
+__device__ volatile int counter2 = 0;
+
+__global__
+void msort(int *d_input, int *d_temp,int N)
+{
+
+// Create two volatile arrays
+     if((threadIdx.x + blockIdx.x * blockDim.x)==0)
+     {  
+        arr1 = d_input;
+        arr2 = d_temp;
+     }
+
+     // Barrier
+        atomicAdd((int*)(&counter1),1);
+        while((int)counter1<N);
+
+    // A for loop to go level by level , i.e merge subarrays sized 1,2,4...
+
+        for(int i=0;val<=N;i++)
+        {
+                int id = (threadIdx.x + blockIdx.x * blockDim.x)*(val*2);
+                int I = id;
+                int J = id+val;
+                if(id<N)
+                {
+                    for(int j=id;j<id+2*val && j<N ;j++)
+                    {
+                        if(I==id+val)
+                        {
+                            while(J<id+2*val&&J<N&&j<N)
+                            {
+                                arr2[j]=arr1[J];
+                                J++;
+                                j++;
+                            }
+                            break;
+                        }
+                        if(J>=id+2*val||J>=N)
+                        {
+                            while(I<id+val&&I<N&&j<N)
+                            {
+                                arr2[j]=arr1[I];
+                                I++;
+                                j++;
+                            }
+                            break;
+                        }
+                        if((arr1[I]<=arr1[J]))
+                        {
+                            arr2[j]=arr1[I];
+                            I++;
+                            continue;
+                        }
+                        else
+                        {
+                            arr2[j]=arr1[J];
+                            J++;
+                            continue;
+                        }
+                    }
+                }
+                atomicAdd((int*)(&counter2),1);
+                while((int)counter2<N*(i+1));
+
+                // swap arrays to avoid excessive memory usage 
+                if((threadIdx.x + blockIdx.x * blockDim.x)==0)
+                {
+                    for(int ig=0;ig<N;ig++)
+                    {
+                        arr1[ig]=arr2[ig];
+                    }
+                    val*=2;
+                }
+                atomicAdd((int*)(&counter3),1);
+                while((int)counter3<N*(i+1));
+        }
+        // move answer from volatile object to initial pointer
+        if((threadIdx.x + blockIdx.x * blockDim.x)==0)
+        {
+            int ijk = 0;
+            for(int it=0;it<N;it++)
+                d_input[it]=arr1[it];
+        }
+        // A final Barrier
+        atomicAdd((int*)(&counter4),1);
+        while((int)counter4<N);
+}

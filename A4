@@ -1,0 +1,172 @@
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include<iostream>
+#include <thrust/count.h>
+#include <vector>
+#include <utility>
+using namespace std;
+#define ll long long 
+int main()
+{
+        ll n;
+        cin>>n;
+        vector<vector<int> > v;
+        char val;
+        vector<pair<int,int> > k;
+        // Insert into vector 
+        for(ll i=0;i<n;i++)
+        {
+            vector<int> v1;
+            for(ll j=0;j<n;j++)
+            {
+                cin>>val;
+                v1.push_back(val-'0');
+                if(val-'0'==1)
+                {
+                    k.push_back(make_pair(i,j));
+                }
+            }
+            v.push_back(v1);
+        }
+        thrust::device_vector<int> X;
+        vector<pair<int,int> > q;
+        for(ll i=0;i<k.size();i++)
+        {
+            pair<int,int> y = k[i];
+            for(ll j=0;j<n;j++)
+            {
+                X.push_back(v[y.first][j]);
+            }
+            int result = thrust::count(X.begin(), X.end(), 1);
+         //   cout<<"For Row "<<y.first<<" "<<result<<endl;
+            if(result>1)
+            {
+                for(ll j=0;j<n;j++)
+                {
+                    if(v[y.first][j]==1)
+                        q.push_back(make_pair(y.first,j));
+                }
+                cout<<"NO"<<endl;
+                cout<<q[0].first<<" "<<q[0].second<<endl;
+                cout<<q[1].first<<" "<<q[1].second<<endl;
+                return 0;
+            }
+            X.clear();
+
+
+            for(ll j=0;j<n;j++)
+            {
+                X.push_back(v[j][y.second]);
+            }
+            result = thrust::count(X.begin(), X.end(), 1);
+        //    cout<<"For Column "<<y.second<<" "<<result<<endl;
+            if(result>1)
+            {
+                vector<pair<int,int> > q;
+                for(ll j=0;j<n;j++)
+                {
+                    if(v[j][y.second]==1)
+                        q.push_back(make_pair(j,y.second));
+                }
+                cout<<"NO"<<endl;
+                cout<<q[0].first<<" "<<q[0].second<<endl;
+                cout<<q[1].first<<" "<<q[1].second<<endl;
+                return 0;
+            }
+            X.clear();
+
+            for(ll j=0;j<n;j++)
+            {
+                if(y.first+j<n&&y.second+j<n)
+                {
+                    X.push_back(v[y.first+j][y.second+j]);
+                }
+                if(y.first-j>=0&&y.second-j>=0)
+                {
+                    X.push_back(v[y.first-j][y.second-j]);
+                }
+            }
+            result = thrust::count(X.begin(), X.end(), 1);
+            if(result>1)
+            {
+                for(ll j=0;j<n;j++)
+                {
+                    if(y.first+j<n&&y.second+j<n)
+                    {
+                        if(v[y.first+j][y.second+j]==1)
+                            q.push_back(make_pair(y.first+j,y.second+j));
+                    }
+                    if(y.first-j>=0&&y.second-j>=0)
+                    {
+                        if(v[y.first-j][y.second-j]==1)
+                            q.push_back(make_pair(y.first-j,y.second-j));
+                    }
+                }
+                if(q[0]!=q[1])
+                {
+                    cout<<"NO"<<endl;
+                    cout<<q[0].first<<" "<<q[0].second<<endl;
+                    cout<<q[1].first<<" "<<q[1].second<<endl;
+                    return 0;
+                }
+                if(q[0]==q[1]&&q.size()>2)
+                {
+                    cout<<"NO"<<endl;
+                    cout<<q[0].first<<" "<<q[0].second<<endl;
+                    cout<<q[2].first<<" "<<q[2].second<<endl;
+                    return 0;
+                }
+                q.clear();
+            }
+            X.clear();
+
+            for(ll j=0;j<n;j++)
+            {
+                if(y.first+j<n&&y.second-j>=0)
+                {
+                    X.push_back(v[y.first+j][y.second-j]);
+                }
+                if(y.first-j>=0&&y.second+j<n)
+                {
+                    X.push_back(v[y.first-j][y.second+j]);
+                }
+            }            
+            result = thrust::count(X.begin(), X.end(), 1);
+            if(result>1)
+            {
+                for(ll j=0;j<n;j++)
+                {
+                    if(y.first+j<n&&y.second-j>=0)
+                    {
+                        if(v[y.first+j][y.second-j]==1)
+                            q.push_back(make_pair(y.first+j,y.second-j));
+                    }
+                    if(y.first-j>=0&&y.second+j<n)
+                    {
+                        if(v[y.first-j][y.second+j]==1)
+                            q.push_back(make_pair(y.first-j,y.second+j));
+                    }
+                }
+                if(q[0]!=q[1])
+                {
+                    cout<<"NO"<<endl;
+                    cout<<q[0].first<<" "<<q[0].second<<endl;
+                    cout<<q[1].first<<" "<<q[1].second<<endl;
+                    return 0;
+                }
+                if(q[0]==q[1]&&q.size()>2)
+                {
+                    cout<<"NO"<<endl;
+                    cout<<q[0].first<<" "<<q[0].second<<endl;
+                    cout<<q[2].first<<" "<<q[2].second<<endl;
+                    return 0;
+                }
+                q.clear();
+            }
+            X.clear();
+        }
+        cout<<"YES"<<endl;
+        return 0;
+}
+
+        
